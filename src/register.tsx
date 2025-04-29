@@ -2,34 +2,61 @@ import { useState } from "react";
 import axios from "axios";
 import Cookies from "js-cookie";
 const Base_url = import.meta.env.VITE_API_URL;
+
 export function Register() {
   const [reg, useReg] = useState({
     full_name: "",
     mobile_no: "",
     email: "",
   });
-  const register = async () => {
-    const api = await axios.post(`${Base_url}/posp/register`, {
-      full_name: reg.full_name,
-      mobile_no: reg.mobile_no,
-      email: reg.email,
-    });
-    console.log(api.data);
-    if (api.data) {
-      setRegistered(false);
-    }
-  };
+  const [verify_otp, setRegisterOtp] = useState({
+    email_otp: "",
+    mobile_otp: "",
+  });
+  const [login_check, setLogin_check] = useState({
+    mobile_no: "",
+    otp: "",
+  });
+
+  const [inlogin, setInlogin] = useState(false);
+  const [showOtpInput, setShowOtpInput] = useState(false);
+  const [registered, setRegistered] = useState(true);
+
+  const goToLogin = () => setInlogin(true);
+  const goToSignUp = () => setInlogin(false);
+
   const update = (ch: React.ChangeEvent<HTMLInputElement>) => {
     useReg((prev) => ({
       ...prev,
       [ch.target.name]: ch.target.value,
     }));
   };
-  const [verify_otp, useVerify_otp] = useState({
-    email_otp: "",
-    mobile_otp: "",
-  });
-  const [registered, setRegistered] = useState(true);
+
+  const update_register_otp = (ch: React.ChangeEvent<HTMLInputElement>) => {
+    setRegisterOtp((prev) => ({
+      ...prev,
+      [ch.target.name]: ch.target.value,
+    }));
+  };
+
+  const update_login_otp = (ch: React.ChangeEvent<HTMLInputElement>) => {
+    setLogin_check((prev) => ({
+      ...prev,
+      [ch.target.name]: ch.target.value,
+    }));
+  };
+
+  const register = async () => {
+    const payload = {
+      full_name: reg.full_name,
+      mobile_no: reg.mobile_no,
+      email: reg.email,
+    };
+    const api = await axios.post(`${Base_url}/posp/register`,payload );
+    if (api.data) {
+      setRegistered(false);
+    }
+  };
 
   const verify = async () => {
     const to_verify_otp = await axios.post(`${Base_url}/posp/verify_otps`, {
@@ -38,54 +65,35 @@ export function Register() {
       email_otp: verify_otp.email_otp,
       mobile_otp: verify_otp.mobile_otp,
     });
-    console.log(to_verify_otp.data);
     if (to_verify_otp.data.access_token) {
       Cookies.set("Token", to_verify_otp.data.access_token, { expires: 7 });
     }
   };
-  const update_otp = (ch: React.ChangeEvent<HTMLInputElement>) => {
-    useVerify_otp((prev) => ({
-      ...prev,
-      [ch.target.name]: ch.target.value,
-    }));
-  };
-
-  const [inlogin, setInlogin] = useState(false);
-  const [login_check, setLogin_check] = useState({
-    mobile_no: "",
-    otp: "",
-  });
-  const [showOtpInput, setShowOtpInput] = useState(false);
 
   const login = async () => {
-    const verify_login = await axios.post(`${Base_url}/posp/login`, {
-      mobile_no: login_check.mobile_no,
-      otp: login_check.otp,
+    try {
+      const verify_login = await axios.post(`${Base_url}/posp/login`, {
+        mobile_no: login_check.mobile_no,
+        otp: login_check.otp,
     });
-    console.log(verify_login);
     if(verify_login.data.accesstoken){
       Cookies.set("Token", verify_login.data.accesstoken,{expires: 7})
     }
+  } catch (error) {
+    console.error(error);
+  }
   };
-  const goToLogin = () => setInlogin(true);
-  const goToSignUp = () => setInlogin(false);
 
-  const update_otps = (ch: React.ChangeEvent<HTMLInputElement>) => {
-    setLogin_check((prev) => ({
-      ...prev,
-      [ch.target.name]: ch.target.value,
-    }));
-  };
-  // const [mob_otp, setMob_otp] = useState({
-  //   mobile_otp: "",
-  // });
   const getOtp = async () => {
     const mobOtp = await axios.post(`${Base_url}/posp/send_otp`, {
       mobile_no: login_check.mobile_no,
     });
-    console.log(mobOtp);
     setShowOtpInput(true);
   };
+  // const [mob_otp, setMob_otp] = useState({
+  //   mobile_otp: "",
+  // });
+
   // const update_mob_otp = (ch: React.ChangeEvent<HTMLInputElement>) => {
   //   setMob_otp((prev) => ({
   //     ...prev,
@@ -122,7 +130,7 @@ export function Register() {
                 placeholder="Mobile number"
                 name="mobile_no"
                 value={login_check.mobile_no}
-                onChange={update_otps}
+                onChange={update_login_otp}
               />
             </div>
             <button 
@@ -140,7 +148,7 @@ export function Register() {
                     placeholder="Enter OTP"
                     name="otp"
                     value={login_check.otp}
-                    onChange={update_otps}
+                    onChange={update_login_otp}
                   />
                 </div>
                 <button 
@@ -201,7 +209,8 @@ export function Register() {
                     className="form-control"
                     name="email_otp"
                     placeholder="Email OTP"
-                    onChange={update_otp}
+                    value={verify_otp.email_otp}
+                    onChange={update_register_otp}
                   />
                 </div>
                 <div className="form-group">
@@ -210,7 +219,8 @@ export function Register() {
                     className="form-control"
                     name="mobile_otp"
                     placeholder="Mobile OTP"
-                    onChange={update_otp}
+                    value={verify_otp.mobile_otp}
+                    onChange={update_register_otp}
                   />
                 </div>
                 <button 
