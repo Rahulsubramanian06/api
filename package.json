@@ -10,9 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@types/js-cookie": "^3.0.6",
     "axios": "^1.9.0",
     "bootstrap": "^5.3.5",
     "cookies": "^0.9.1",
+    "js-cookie": "^3.0.5",
     "react": "^19.0.0",
     "react-bootstrap": "^2.10.9",
     "react-dom": "^19.0.0"
