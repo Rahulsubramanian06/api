@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import Cookies from "js-cookie";
 import "./register.css";
@@ -22,10 +22,25 @@ export function Login_form() {
 
   const [inlogin, setInlogin] = useState(false);
   const [showOtpInput, setShowOtpInput] = useState(false);
+  const [hideOtp, setHideOtp] = useState(true);
   const [registered, setRegistered] = useState(false);
+  const [timer, setTimer] = useState(10); // 30 seconds timer
+  const [canResend, setCanResend] = useState(false);
 
   const goToLogin = () => setInlogin(true);
   const goToSignUp = () => setInlogin(false);
+
+  useEffect(() => {
+    let interval: number;
+    if (timer > 0 && !canResend) {
+      interval = window.setInterval(() => {
+        setTimer((prevTimer) => prevTimer - 1);
+      }, 1000);
+    } else if (timer === 0) {
+      setCanResend(true);
+    }
+    return () => clearInterval(interval);
+  }, [timer, canResend]);
 
   const update = (ch: React.ChangeEvent<HTMLInputElement>) => {
     useReg((prev) => ({
@@ -102,8 +117,22 @@ export function Login_form() {
       }
       const mobOtp = await axios.post(`${Base_url}/posp/send_otp`, payload);
       setShowOtpInput(true);
+      setHideOtp(false);
     } catch (error) {
       console.error(error)
+    }
+  };
+
+  const handleResendOtp = async () => {
+    try {
+      const payload = {
+        mobile_no: login_check.mobile_no,
+      };
+      await axios.post(`${Base_url}/posp/send_otp`, payload);
+      setTimer(10);
+      setCanResend(false);
+    } catch (error) {
+      console.error(error);
     }
   };
   
@@ -142,12 +171,14 @@ export function Login_form() {
                 onChange={update_login_otp}
               />
             </div>
-            <button 
-              className="btn btn-primary w-100" 
-              onClick={getOtp}
-            >
-              Get OTP
-            </button>
+            {hideOtp && (
+              <button 
+                className="btn btn-primary w-100" 
+                onClick={getOtp}
+              >
+                Get OTP
+              </button>
+            )}
             {showOtpInput && (
               <>
                 <div className="form-group">
@@ -160,6 +191,14 @@ export function Login_form() {
                     onChange={update_login_otp}
                   />
                 </div>
+                <p>Wait to resend OTP: {timer} seconds</p>
+                <button 
+                  className="btn btn-secondary w-100 mb-2" 
+                  onClick={handleResendOtp}
+                  disabled={!canResend}
+                >
+                  Resend OTP
+                </button>
                 <button 
                   className="btn btn-success w-100" 
                   onClick={login}
