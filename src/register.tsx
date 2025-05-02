@@ -2,6 +2,7 @@ import { useState} from "react";
 import axios from "axios";
 import Cookies from "js-cookie";
 import "./register.css";
+import { register_api } from "./api/register_api";
 const Base_url = import.meta.env.VITE_API_URL;
 
 export function Login_form() {
@@ -69,7 +70,7 @@ export function Login_form() {
 
   const register = async () => {
     try {
-      const payload: Record<string, unknown> = {
+      const payload = {
         full_name: reg.full_name,
         mobile_no: reg.mobile_no,
         email: reg.email,
