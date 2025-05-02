@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState} from "react";
 import axios from "axios";
 import Cookies from "js-cookie";
 import "./register.css";
@@ -14,7 +14,7 @@ export function Login_form() {
     email_otp: "",
     mobile_otp: "",
   });
- 
+
   const [login_check, setLogin_check] = useState({
     mobile_no: "",
     otp: "",
@@ -24,23 +24,27 @@ export function Login_form() {
   const [showOtpInput, setShowOtpInput] = useState(false);
   const [hideOtp, setHideOtp] = useState(true);
   const [registered, setRegistered] = useState(false);
-  const [timer, setTimer] = useState(10); // 30 seconds timer
+  const [timer, setTimerm] = useState(0);
   const [canResend, setCanResend] = useState(false);
 
   const goToLogin = () => setInlogin(true);
   const goToSignUp = () => setInlogin(false);
-
-  useEffect(() => {
+  const resendFunc = () => {
+    setCanResend(false);
+    setTimerm(10);
     let interval: number;
-    if (timer > 0 && !canResend) {
-      interval = window.setInterval(() => {
-        setTimer((prevTimer) => prevTimer - 1);
-      }, 1000);
-    } else if (timer === 0) {
-      setCanResend(true);
-    }
-    return () => clearInterval(interval);
-  }, [timer, canResend]);
+    interval = setInterval(() => {
+      setTimerm((prevTimer) => {
+        const newTime = prevTimer - 1;
+        if (newTime === 0) {
+          clearInterval(interval);
+          setCanResend(true);
+          return 0;
+        }
+        return newTime;
+      });
+    }, 1000);
+  };
 
   const update = (ch: React.ChangeEvent<HTMLInputElement>) => {
     useReg((prev) => ({
@@ -65,19 +69,18 @@ export function Login_form() {
 
   const register = async () => {
     try {
-      const payload = {
+      const payload: Record<string, unknown> = {
         full_name: reg.full_name,
         mobile_no: reg.mobile_no,
         email: reg.email,
       };
-      const api = await axios.post(`${Base_url}/posp/register`,payload );
+      const api = await axios.post(`${Base_url}/posp/register`, payload);
       if (api.data) {
         setRegistered(true);
       }
     } catch (error) {
-      console.error(error)
+      console.error(error);
     }
-    
   };
 
   const verify = async () => {
@@ -87,13 +90,15 @@ export function Login_form() {
         mobile_no: reg.mobile_no,
         email_otp: verify_otp.email_otp,
         mobile_otp: verify_otp.mobile_otp,
-      }
-      const to_verify_otp = await axios.post(`${Base_url}/posp/verify_otps`, payload);
-        Cookies.set("Token", to_verify_otp.data.access_token, { expires: 7 });
+      };
+      const to_verify_otp = await axios.post(
+        `${Base_url}/posp/verify_otps`,
+        payload
+      );
+      Cookies.set("Token", to_verify_otp.data.access_token, { expires: 7 });
     } catch (error) {
-      console.error(error)
+      console.error(error);
     }
-    
   };
 
   const login = async () => {
@@ -101,57 +106,47 @@ export function Login_form() {
       const payload = {
         mobile_no: login_check.mobile_no,
         otp: login_check.otp,
-    }
+      };
       const verify_login = await axios.post(`${Base_url}/posp/login`, payload);
-      Cookies.set("Token", verify_login.data.accesstoken,{expires: 7})
-      localStorage.setItem("Posp_id", verify_login.data.posp_id)
-  } catch (error) {
-    console.error(error);
-  }
+      Cookies.set("Token", verify_login.data.accesstoken, { expires: 7 });
+      localStorage.setItem("Posp_id", verify_login.data.posp_id);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const getOtp = async () => {
     try {
       const payload = {
         mobile_no: login_check.mobile_no,
-      }
+      };
       const mobOtp = await axios.post(`${Base_url}/posp/send_otp`, payload);
       setShowOtpInput(true);
       setHideOtp(false);
-    } catch (error) {
-      console.error(error)
-    }
-  };
-
-  const handleResendOtp = async () => {
-    try {
-      const payload = {
-        mobile_no: login_check.mobile_no,
-      };
-      await axios.post(`${Base_url}/posp/send_otp`, payload);
-      setTimer(10);
-      setCanResend(false);
+      resendFunc();
     } catch (error) {
       console.error(error);
     }
   };
-  
 
- 
   return (
     <div className="container d-flex justify-content-center align-items-center min-vh-100">
-      <div className="card p-4 shadow" style={{ width: '400px' }}>
+      <div className="card p-4 shadow" style={{ width: "400px" }}>
         <div className="text-center mb-4">
           <h2 className="mb-4">{inlogin ? "Login" : "Register"}</h2>
           <div className="btn-group mb-4">
-            <button 
-              className={`btn ${!inlogin ? 'btn-primary active' : 'btn-outline-primary'}`} 
+            <button
+              className={`btn ${
+                !inlogin ? "btn-primary active" : "btn-outline-primary"
+              }`}
               onClick={goToSignUp}
             >
               Sign Up
             </button>
-            <button 
-              className={`btn ${inlogin ? 'btn-primary active' : 'btn-outline-primary'}`} 
+            <button
+              className={`btn ${
+                inlogin ? "btn-primary active" : "btn-outline-primary"
+              }`}
               onClick={goToLogin}
             >
               Sign In
@@ -172,10 +167,7 @@ export function Login_form() {
               />
             </div>
             {hideOtp && (
-              <button 
-                className="btn btn-primary w-100" 
-                onClick={getOtp}
-              >
+              <button className="btn btn-primary w-100" onClick={getOtp}>
                 Get OTP
               </button>
             )}
@@ -191,18 +183,18 @@ export function Login_form() {
                     onChange={update_login_otp}
                   />
                 </div>
-                <p>Wait to resend OTP: {timer} seconds</p>
-                <button 
-                  className="btn btn-secondary w-100 mb-2" 
-                  onClick={handleResendOtp}
-                  disabled={!canResend}
-                >
-                  Resend OTP
-                </button>
-                <button 
-                  className="btn btn-success w-100" 
-                  onClick={login}
-                >
+                <div className="d-flex justify-content-end">
+                  <p
+                    className={`w-50 mb-2 ${
+                      canResend ? "text-primary cursor-pointer" : "text-muted"
+                    }`}
+                    onClick={canResend ? getOtp : undefined}
+                    style={{ cursor: canResend ? "pointer" : "default" }}
+                  >
+                    Resend OTP: {timer} sec
+                  </p>
+                </div>
+                <button className="btn btn-success w-100" onClick={login}>
                   Login
                 </button>
               </>
@@ -232,10 +224,7 @@ export function Login_form() {
                     onChange={update_register_otp}
                   />
                 </div>
-                <button 
-                  className="btn btn-success w-100" 
-                  onClick={verify}
-                >
+                <button className="btn btn-success w-100" onClick={verify}>
                   Submit
                 </button>
               </div>
@@ -271,14 +260,11 @@ export function Login_form() {
                     placeholder="Email id"
                   />
                 </div>
-                <button 
-                  className="btn btn-primary w-100" 
-                  onClick={register}
-                >
+                <button className="btn btn-primary w-100" onClick={register}>
                   Sign UP
                 </button>
               </div>
-            ) }
+            )}
           </div>
         )}
       </div>
