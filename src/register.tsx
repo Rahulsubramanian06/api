@@ -1,11 +1,13 @@
-import { useState} from "react";
-import axios from "axios";
+import { useState } from "react";
 import Cookies from "js-cookie";
 import "./register.css";
-import { register_api } from "./api/register_api";
-const Base_url = import.meta.env.VITE_API_URL;
-
+import { get_exam_results, register_api } from "./api/all_api";
+import { verify_register_api } from "./api/all_api";
+import { login_api } from "./api/all_api";
+import { get_otp_api } from "./api/all_api";
+import { useNavigate } from "react-router-dom";
 export function Login_form() {
+  const navigate = useNavigate();
   const [reg, useReg] = useState({
     full_name: "",
     mobile_no: "",
@@ -25,17 +27,17 @@ export function Login_form() {
   const [showOtpInput, setShowOtpInput] = useState(false);
   const [hideOtp, setHideOtp] = useState(true);
   const [registered, setRegistered] = useState(false);
-  const [timer, setTimerm] = useState(0);
+  const [timer, setTimer] = useState(0);
   const [canResend, setCanResend] = useState(false);
 
   const goToLogin = () => setInlogin(true);
   const goToSignUp = () => setInlogin(false);
   const resendFunc = () => {
     setCanResend(false);
-    setTimerm(10);
+    setTimer(10);
     let interval: number;
     interval = setInterval(() => {
-      setTimerm((prevTimer) => {
+      setTimer((prevTimer) => {
         const newTime = prevTimer - 1;
         if (newTime === 0) {
           clearInterval(interval);
@@ -70,12 +72,12 @@ export function Login_form() {
 
   const register = async () => {
     try {
-      const payload = {
+      const payload_data = {
         full_name: reg.full_name,
         mobile_no: reg.mobile_no,
         email: reg.email,
       };
-      const api = await axios.post(`${Base_url}/posp/register`, payload);
+      const api = await register_api(payload_data);
       if (api.data) {
         setRegistered(true);
       }
@@ -86,16 +88,13 @@ export function Login_form() {
 
   const verify = async () => {
     try {
-      const payload = {
+      const payload_data = {
         email: reg.email,
         mobile_no: reg.mobile_no,
         email_otp: verify_otp.email_otp,
         mobile_otp: verify_otp.mobile_otp,
       };
-      const to_verify_otp = await axios.post(
-        `${Base_url}/posp/verify_otps`,
-        payload
-      );
+      const to_verify_otp = await verify_register_api(payload_data);
       Cookies.set("Token", to_verify_otp.data.access_token, { expires: 7 });
     } catch (error) {
       console.error(error);
@@ -104,24 +103,42 @@ export function Login_form() {
 
   const login = async () => {
     try {
-      const payload = {
+      const payload_data = {
         mobile_no: login_check.mobile_no,
         otp: login_check.otp,
       };
-      const verify_login = await axios.post(`${Base_url}/posp/login`, payload);
+      const header ={
+        headers : {Authorization : `Bearer ${Cookies.get("Token")}` }
+      }
+      const verify_login = await login_api(payload_data);
       Cookies.set("Token", verify_login.data.accesstoken, { expires: 7 });
       localStorage.setItem("Posp_id", verify_login.data.posp_id);
+      get_exam_results(header);
+      if (
+        verify_login.data.is_training_completed &&
+        verify_login.data.is_profile_completed &&
+        verify_login.data.is_exam_completed &&
+        verify_login.data.is_agreement_signed
+      ) {
+        navigate(
+          verify_login.data.is_approved
+            ? "/dashboard/approved"
+            : "/dashboard/not-approved"
+        );
+      } else {
+        navigate("/Training");
+      }
     } catch (error) {
       console.error(error);
     }
   };
 
-  const getOtp = async () => {
+  const get_otp = async () => {
     try {
-      const payload = {
+      const payload_data = {
         mobile_no: login_check.mobile_no,
       };
-      const mobOtp = await axios.post(`${Base_url}/posp/send_otp`, payload);
+       await get_otp_api(payload_data);
       setShowOtpInput(true);
       setHideOtp(false);
       resendFunc();
@@ -168,7 +185,7 @@ export function Login_form() {
               />
             </div>
             {hideOtp && (
-              <button className="btn btn-primary w-100" onClick={getOtp}>
+              <button className="btn btn-primary w-100" onClick={get_otp}>
                 Get OTP
               </button>
             )}
@@ -189,7 +206,7 @@ export function Login_form() {
                     className={`w-50 mb-2 ${
                       canResend ? "text-primary cursor-pointer" : "text-muted"
                     }`}
-                    onClick={canResend ? getOtp : undefined}
+                    onClick={canResend ? get_otp : undefined}
                     style={{ cursor: canResend ? "pointer" : "default" }}
                   >
                     Resend OTP: {timer} sec
