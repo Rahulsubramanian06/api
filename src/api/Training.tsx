@@ -22,7 +22,6 @@ const Training = () => {
     };
     fetchExamResults();
   }, []);
-
   return (
     <>
       <div>Training</div>
