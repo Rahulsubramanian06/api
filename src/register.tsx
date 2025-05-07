@@ -107,13 +107,11 @@ export function Login_form() {
         mobile_no: login_check.mobile_no,
         otp: login_check.otp,
       };
-      const header ={
-        headers : {Authorization : `Bearer ${Cookies.get("Token")}` }
-      }
+      
       const verify_login = await login_api(payload_data);
       Cookies.set("Token", verify_login.data.accesstoken, { expires: 7 });
       localStorage.setItem("Posp_id", verify_login.data.posp_id);
-      get_exam_results(header);
+      
       if (
         verify_login.data.is_training_completed &&
         verify_login.data.is_profile_completed &&
@@ -123,7 +121,7 @@ export function Login_form() {
         navigate(
           verify_login.data.is_approved
             ? "/dashboard/approved"
-            : "/dashboard/not-approved"
+            : "/Training"
         );
       } else {
         navigate("/Training");
@@ -138,7 +136,7 @@ export function Login_form() {
       const payload_data = {
         mobile_no: login_check.mobile_no,
       };
-       await get_otp_api(payload_data);
+      await get_otp_api(payload_data);
       setShowOtpInput(true);
       setHideOtp(false);
       resendFunc();
