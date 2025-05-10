@@ -18,11 +18,9 @@ interface login_type {
 interface get_otp_type {
   mobile_no: string;
 }
-const id = localStorage.getItem("Posp_id");
 export function register_api(payload: register_type) {
   return axios.post(`${Base_url}/posp/register`, payload);
 }
-
 export function verify_register_api(payload: verify_register_type) {
   return axios.post(`${Base_url}/posp/verify_otps`, payload);
 }
@@ -33,5 +31,6 @@ export function get_otp_api(payload: get_otp_type) {
   return axios.post(`${Base_url}/posp/send_otp`, payload);
 }
 export function get_exam_results(header: any) {
+  const id = localStorage.getItem("Posp_id");
   return axios.get(`${Base_url}/posp/exam_results?posp_id=${id}`, header);
 }

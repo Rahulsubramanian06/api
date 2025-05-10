@@ -120,7 +120,7 @@ export function Login_form() {
       ) {
         navigate(
           verify_login.data.is_approved
-            ? "/dashboard/approved"
+            ? "/Training"
             : "/Training"
         );
       } else {
