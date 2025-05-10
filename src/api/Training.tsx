@@ -25,7 +25,6 @@ const Training = () => {
     };
     fetchExamResults();
   }, []);
-
   
   const logout = (): void => {
     Cookies.remove("Token");
@@ -42,7 +41,9 @@ const Training = () => {
   </div>
 
   <div className="row">
-    {exam_array.map((item:any, id:any) => (
+    {exam_array
+    .filter((item: any) => item.is_passed)
+    .map((item:any, id:any) => (
       <div key={id} className="col-md-6 col-lg-4 mb-4">
         <div className="card shadow-sm h-100">
           <div className="card-body">
