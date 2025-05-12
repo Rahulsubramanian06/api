@@ -51,6 +51,7 @@ const Training = () => {
             <p className="card-text"><strong>POSP ID:</strong> {item.posp_id}</p>
             <p className="card-text"><strong>Total Marks:</strong> {item.total_marks}</p>
             <p className="card-text"><strong>Passing Marks:</strong> {item.passing_marks}</p>
+            <p className="card-text"><strong>Marks obtained:</strong> {item.total_marks_obtained}</p>
             <p className="card-text">
               <strong>Result:</strong>{" "}
               <span className={item.is_passed ? "text-success" : "text-danger"}>
@@ -64,7 +65,6 @@ const Training = () => {
     ))}
   </div>
 </div>
-
     </>
   );
 };
